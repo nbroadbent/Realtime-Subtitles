@@ -1,13 +1,18 @@
 package school.realtimesubtitles;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.nfc.Tag;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -27,17 +32,21 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Switch;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
     private ChatAdapter chatAdapter;
+    private SpeechRecognizer sr;
 
     private ArrayList<Microphone> mics;
     private ArrayList<Message> chat;
-
     private ListView chatList;
 
 
@@ -47,13 +56,13 @@ public class ChatActivity extends AppCompatActivity {
 
     private RecordButton mRecordButton = null;
     private MediaRecorder mRecorder = null;
-
     private PlayButton   mPlayButton = null;
     private MediaPlayer mPlayer = null;
 
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+    private final int REQ_CODE_SPEECH_INPUT = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +73,7 @@ public class ChatActivity extends AppCompatActivity {
 
         chatList = findViewById(R.id.chatView);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -83,7 +92,8 @@ public class ChatActivity extends AppCompatActivity {
         mRecordButton = new RecordButton(this);
         mPlayButton = new PlayButton(this);
 
-        LinearLayout linearLayout = findViewById(R.id.ll);
+        sr = SpeechRecognizer.createSpeechRecognizer(this);
+        sr.setRecognitionListener(new listener());
 
         final Switch rec = findViewById(R.id.record);
         Button play = findViewById(R.id.play);
@@ -92,9 +102,16 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (rec.isChecked())
-                    startRecording();
-                else
-                    stopRecording();
+                {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
+
+                    intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
+                    sr.startListening(intent);
+                    Log.i("111111","11111111");
+                    rec.setChecked(false);
+                }
             }
         });
 
@@ -120,9 +137,9 @@ public class ChatActivity extends AppCompatActivity {
 
         chat = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
-            chat.add(new Message(mics.get(0), "YOOOOOOOOO"));
-            chat.add(new Message(mics.get(1), "Let's get some pizza"));
-            chat.add(new Message(mics.get(2), "Yes"));
+            //chat.add(new Message(mics.get(0), "YOOOOOOOOO"));
+            //chat.add(new Message(mics.get(1), "Let's get some pizza"));
+            //chat.add(new Message(mics.get(2), "Yes"));
         }
         updateChatView();
 
@@ -132,6 +149,58 @@ public class ChatActivity extends AppCompatActivity {
                 changeName(i);
             }
         });
+    }
+
+    class listener implements RecognitionListener {
+        public void onReadyForSpeech(Bundle params)
+        {
+            Log.d(LOG_TAG, "onReadyForSpeech");
+        }
+        public void onBeginningOfSpeech()
+        {
+            Log.d(LOG_TAG, "onBeginningOfSpeech");
+        }
+        public void onRmsChanged(float rmsdB)
+        {
+            Log.d(LOG_TAG, "onRmsChanged");
+        }
+        public void onBufferReceived(byte[] buffer)
+        {
+            Log.d(LOG_TAG, "onBufferReceived");
+        }
+        public void onEndOfSpeech()
+        {
+            Log.d(LOG_TAG, "onEndofSpeech");
+        }
+        public void onError(int error)
+        {
+            Log.d(LOG_TAG,  "error " +  error);
+        }
+        public void onResults(Bundle results)
+        {
+            // Analyze speech results.
+            String str = new String();
+            Log.d(LOG_TAG, "onResults " + results);
+            ArrayList data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+            for (int i = 0; i < data.size(); i++)
+            {
+                Log.d(LOG_TAG, "result " + data.get(i));
+                str += data.get(i);
+            }
+
+            // Create chat message.
+            Message message = new Message(mics.get(0), String.valueOf(data.get(0)));
+            chat.add(message);
+            updateChatView();
+        }
+        public void onPartialResults(Bundle partialResults)
+        {
+            Log.d(LOG_TAG, "onPartialResults");
+        }
+        public void onEvent(int eventType, Bundle params)
+        {
+            Log.d(LOG_TAG, "onEvent " + eventType);
+        }
     }
 
     @Override
