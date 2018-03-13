@@ -58,6 +58,7 @@ public class ChatActivity extends AppCompatActivity {
     private MediaRecorder mRecorder = null;
     private PlayButton   mPlayButton = null;
     private MediaPlayer mPlayer = null;
+    private Switch rec;
 
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
@@ -95,7 +96,7 @@ public class ChatActivity extends AppCompatActivity {
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(new listener());
 
-        final Switch rec = findViewById(R.id.record);
+        rec = findViewById(R.id.record);
         Button play = findViewById(R.id.play);
 
         rec.setOnClickListener(new View.OnClickListener() {
@@ -151,6 +152,17 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private void listenForSpeech(){
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
+
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
+        sr.startListening(intent);
+        Log.i("111111","11111111");
+        rec.setChecked(false);
+    }
+
     class listener implements RecognitionListener {
         public void onReadyForSpeech(Bundle params)
         {
@@ -192,6 +204,7 @@ public class ChatActivity extends AppCompatActivity {
             Message message = new Message(mics.get(0), String.valueOf(data.get(0)));
             chat.add(message);
             updateChatView();
+            listenForSpeech();
         }
         public void onPartialResults(Bundle partialResults)
         {
