@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.nfc.Tag;
@@ -13,7 +14,10 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.support.annotation.ColorLong;
+import android.support.annotation.ColorRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -54,11 +58,13 @@ public class ChatActivity extends AppCompatActivity {
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static String mFileName = null;
 
+
     private RecordButton mRecordButton = null;
     private MediaRecorder mRecorder = null;
     private PlayButton   mPlayButton = null;
     private MediaPlayer mPlayer = null;
     private Switch rec;
+    private Switch lang;
 
     // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
@@ -74,12 +80,39 @@ public class ChatActivity extends AppCompatActivity {
 
         chatList = findViewById(R.id.chatView);
 
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton mic1 = (FloatingActionButton) findViewById(R.id.mic1);
+        mic1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Settings", Snackbar.LENGTH_LONG)
+                if (mics.get(0).isActive()) {
+                    Snackbar.make(view, "Mic 1 listening stopped", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+
+                    sr.cancel();
+                    sr.stopListening();
+                    sr.destroy();
+                    mic1.setRippleColor(0);
+                    mics.get(0).setActive(false);
+                } else {
+                    Snackbar.make(view, "Mic 1 listening", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+
+                    mic1.setRippleColor(500);
+                    restartSpeech();
+                    listenForSpeech();
+                    mics.get(0).setActive(true);
+                }
+            }
+        });
+
+        final FloatingActionButton mic2 = (FloatingActionButton) findViewById(R.id.mic2);
+        mic2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Mic 2 listening", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+
+                listenForSpeech();
             }
         });
 
@@ -93,18 +126,21 @@ public class ChatActivity extends AppCompatActivity {
         mRecordButton = new RecordButton(this);
         mPlayButton = new PlayButton(this);
 
-        sr = SpeechRecognizer.createSpeechRecognizer(this);
-        sr.setRecognitionListener(new listener());
+        //rec = findViewById(R.id.record);
+        lang = findViewById(R.id.lang);
+        //Button play = findViewById(R.id.play);
 
-        rec = findViewById(R.id.record);
-        Button play = findViewById(R.id.play);
-
+        /*
         rec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (rec.isChecked())
                 {
                     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    if (mics.get(0).isEnglish())
+                        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+                    else
+                        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr");
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                     intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
 
@@ -115,7 +151,31 @@ public class ChatActivity extends AppCompatActivity {
                 }
             }
         });
+        */
 
+        lang.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                for (int i = 0; i < mics.size(); i++) {
+                    mics.get(i).setEnglish(lang.isChecked());
+                }
+
+                sr.setRecognitionListener(new listener());
+                listenForSpeech();
+                mics.get(0).setActive(true);
+
+                if (lang.isChecked()) {
+                    Snackbar.make(view, "English", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                } else {
+                    Snackbar.make(view, "French", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            }
+        });
+
+        /*
         play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -126,7 +186,7 @@ public class ChatActivity extends AppCompatActivity {
                 startPlaying();
             }
         });
-
+*/
         // Testing //
 
         // Microphones //
@@ -152,15 +212,26 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private void restartSpeech() {
+        sr = SpeechRecognizer.createSpeechRecognizer(this);
+        sr.setRecognitionListener(new listener());
+    }
+
     private void listenForSpeech(){
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        if (mics.get(0).isEnglish())
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        else
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr");
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
+        //intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
 
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
+
+        //rec.setChecked(false);
+
         sr.startListening(intent);
         Log.i("111111","11111111");
-        rec.setChecked(false);
     }
 
     class listener implements RecognitionListener {
@@ -187,6 +258,10 @@ public class ChatActivity extends AppCompatActivity {
         public void onError(int error)
         {
             Log.d(LOG_TAG,  "error " +  error);
+
+            sr.destroy();
+            restartSpeech();
+            listenForSpeech();
         }
         public void onResults(Bundle results)
         {
@@ -375,12 +450,22 @@ public class ChatActivity extends AppCompatActivity {
                 .setTitle("Name Change")
                 .setMessage("Change " + chat.get(pos).getMicrophone().getName() + "'s name")
                 .setView(input)
-                .setNegativeButton("Cancel",null)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setNeutralButton("Cancel",null)
+                .setPositiveButton("French", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Set new name.
                         chat.get(pos).getMicrophone().setName(input.getText().toString());
+                        chat.get(pos).getMicrophone().setEnglish(false);
+                        updateChatView();
+                    }
+                })
+                .setNegativeButton("English", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Set new name.
+                        chat.get(pos).getMicrophone().setName(input.getText().toString());
+                        chat.get(pos).getMicrophone().setEnglish(true);
                         updateChatView();
                     }
                 }).create().show();
