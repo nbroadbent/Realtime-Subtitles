@@ -8,8 +8,10 @@
     tools:context="school.realtimesubtitles.ChatActivity"
     tools:showIn="@layout/activity_chat">
 
-    <ListView
-        android:id="@+id/chatView"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content">
+
+    </android.support.v7.widget.RecyclerView>
 </LinearLayout>

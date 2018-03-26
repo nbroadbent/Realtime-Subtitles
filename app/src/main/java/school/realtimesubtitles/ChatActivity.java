@@ -23,6 +23,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.InputType;
 import android.util.Log;
@@ -47,11 +49,13 @@ import java.util.Locale;
 public class ChatActivity extends AppCompatActivity {
 
     private ChatAdapter chatAdapter;
+    CustomItemClickListener listener;
     private SpeechRecognizer sr;
+    private RecyclerView.LayoutManager layoutManager;
 
     private ArrayList<Microphone> mics;
     private ArrayList<Message> chat;
-    private ListView chatList;
+    private RecyclerView chatList;
 
 
     private static final String LOG_TAG = "AudioRecordTest";
@@ -78,7 +82,14 @@ public class ChatActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        chatList = findViewById(R.id.chatView);
+
+
+        chatList = findViewById(R.id.recycler1);
+
+        layoutManager = new LinearLayoutManager(this);
+        chatList.setLayoutManager(layoutManager);
+
+
 
         final FloatingActionButton mic1 = (FloatingActionButton) findViewById(R.id.mic1);
         mic1.setOnClickListener(new View.OnClickListener() {
@@ -126,32 +137,7 @@ public class ChatActivity extends AppCompatActivity {
         mRecordButton = new RecordButton(this);
         mPlayButton = new PlayButton(this);
 
-        //rec = findViewById(R.id.record);
         lang = findViewById(R.id.lang);
-        //Button play = findViewById(R.id.play);
-
-        /*
-        rec.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (rec.isChecked())
-                {
-                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                    if (mics.get(0).isEnglish())
-                        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
-                    else
-                        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr");
-                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                    intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
-
-                    intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
-                    sr.startListening(intent);
-                    Log.i("111111","11111111");
-                    rec.setChecked(false);
-                }
-            }
-        });
-        */
 
         lang.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,18 +161,6 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        /*
-        play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (rec.isChecked()){
-                    stopRecording();
-                    rec.setChecked(false);
-                }
-                startPlaying();
-            }
-        });
-*/
         // Testing //
 
         // Microphones //
@@ -204,12 +178,12 @@ public class ChatActivity extends AppCompatActivity {
         }
         updateChatView();
 
-        chatList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        /*chatList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 changeName(i);
             }
-        });
+        });*/
     }
 
     private void restartSpeech() {
@@ -438,8 +412,14 @@ public class ChatActivity extends AppCompatActivity {
 
 
     protected void updateChatView(){
-        chatAdapter = new ChatAdapter(ChatActivity.this, chat);
+        chatAdapter = new ChatAdapter(ChatActivity.this, chat, new CustomItemClickListener() {
+            @Override
+            public void onItemClick(View v, int position) {
+                changeName(position);
+            }
+        });
         chatList.setAdapter(chatAdapter);
+        chatList.smoothScrollToPosition(chatAdapter.getItemCount());
     }
 
     private void changeName(final int pos){

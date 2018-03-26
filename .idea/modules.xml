@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RealtimeSubtitles.iml" filepath="$PROJECT_DIR$/RealtimeSubtitles.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Realtime-Subtitles.iml" filepath="$PROJECT_DIR$/Realtime-Subtitles.iml" />
+      <module fileurl="file://C:\Users\owotu\Documents\Realtime-Subtitles\RealtimeSubtitles.iml" filepath="C:\Users\owotu\Documents\Realtime-Subtitles\RealtimeSubtitles.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\Users\owotu\Documents\Realtime-Subtitles\app\app.iml" filepath="C:\Users\owotu\Documents\Realtime-Subtitles\app\app.iml" />
     </modules>
   </component>
 </project>
